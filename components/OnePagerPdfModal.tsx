@@ -564,8 +564,7 @@ export const OnePagerPdfModal: React.FC<OnePagerPdfModalProps> = ({
                           })}
                         </div>
 
-                        <div className="pt-1 border-t border-slate-200 text-[8px] text-slate-400 flex justify-between">
-                          <span>Sheet: {p.sheetName}</span>
+                        <div className="pt-1 border-t border-slate-200 text-[8px] text-slate-400 flex justify-end">
                           <span>{p.tagline.split('.')[0]}</span>
                         </div>
                       </div>

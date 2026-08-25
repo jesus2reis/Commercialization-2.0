@@ -205,7 +205,7 @@ export const PillarsView: React.FC<PillarsViewProps> = ({
               </div>
               <div>
                 <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                  Spreadsheet Sheet: {selectedPillar.sheetName}
+                  Strategic Pillar
                 </span>
                 <h2 className="text-2xl font-black text-slate-900 leading-tight">
                   {selectedPillar.name}
@@ -259,7 +259,7 @@ export const PillarsView: React.FC<PillarsViewProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <FileSpreadsheet size={18} className="text-[#0033a0]" />
-              <span>Products Mapped in Sheet "{selectedPillar.sheetName}" ({pillarProducts.length} items)</span>
+              <span>Products Mapped in this Pillar ({pillarProducts.length} items)</span>
             </h3>
 
             {onNavigateToMatrixWithPillar && (

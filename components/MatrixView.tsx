@@ -365,13 +365,9 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
                       {p.tagline}
                     </p>
 
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-slate-500 uppercase tracking-wider">Explore Sheet</span>
-                      <span 
-                        className="font-black px-2 py-0.5 rounded-md text-[10px]"
-                        style={{ backgroundColor: `${p.accentHex}20`, color: p.accentHex }}
-                      >
-                        {p.accentHex}
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-end text-[11px]">
+                      <span className="font-bold text-[#0033a0] tracking-wider flex items-center gap-1 group-hover:underline">
+                        Explore <ChevronRight size={12} />
                       </span>
                     </div>
                   </button>

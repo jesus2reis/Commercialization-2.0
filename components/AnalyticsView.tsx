@@ -139,8 +139,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               </div>
 
               <div>
-                <h4 className="text-xs font-bold text-slate-900 truncate">{pillar.name}</h4>
-                <span className="text-[10px] text-slate-500 font-semibold block">Sheet: {pillar.sheetName}</span>
+                <h4 className="text-sm font-bold text-slate-900 truncate">{pillar.name}</h4>
               </div>
 
               <div className="w-full bg-white/80 h-1.5 rounded-full overflow-hidden">

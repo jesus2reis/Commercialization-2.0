@@ -416,7 +416,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         return (
                           <div
                             key={p.id}
-                            title={`${p.name} (Sheet: ${p.sheetName}): ${score}%`}
+                            title={`${p.name}: ${score}%`}
                             className="flex flex-col justify-between p-1.5 rounded-xl bg-slate-50 border border-slate-200/80 hover:bg-slate-100/70 transition-colors"
                           >
                             <div className="flex items-center justify-between gap-1">

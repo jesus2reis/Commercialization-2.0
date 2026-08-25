@@ -274,7 +274,7 @@ export const CountryDrilldownModal: React.FC<CountryDrilldownModalProps> = ({
                           {pillar.name}
                         </h3>
                         <span className="text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 bg-white border border-slate-200 text-slate-700 rounded shadow-2xs">
-                          Sheet: {pillar.sheetName}
+                          Pillar
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 font-medium line-clamp-1">
