@@ -41,9 +41,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="font-black text-lg sm:text-xl text-[#071b45] leading-none tracking-tight">
                 COMMERCIALIZATION 2.0
               </span>
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-[#0033a0] border border-blue-200">
-                6 Pillars
-              </span>
             </div>
             <span className="text-[11px] font-semibold text-slate-400 mt-1 hidden md:block">
               Select a market to analyze portfolio coverage
