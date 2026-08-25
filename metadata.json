@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix FMC Portfolio Intelligence",
+  "description": "Internal business intelligence tool for Fresenius Medical Care to analyze product portfolio coverage across markets and strategic pillars.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
