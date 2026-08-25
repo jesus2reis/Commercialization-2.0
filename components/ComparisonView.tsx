@@ -38,7 +38,6 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [selectorSearch, setSelectorSearch] = useState('');
   const [activePillarFilter, setActivePillarFilter] = useState<PillarId | 'ALL'>('ALL');
-  const [rangeSubFilter, setRangeSubFilter] = useState<'ALL' | 'Essentials' | 'Expert'>('ALL');
   const selectorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -102,7 +101,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
   }, [activePillarFilter]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 animate-in fade-in duration-300 space-y-6">
+    <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-6 animate-in fade-in duration-300 space-y-6">
       
       {/* Header Toolbar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -125,41 +124,13 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-3">
           
-          {/* Range Scope Switcher (Product Attribute Filter) */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
-            <button
-              onClick={() => setRangeSubFilter('ALL')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                rangeSubFilter === 'ALL' ? 'bg-white text-[#0033a0] shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              All Ranges
-            </button>
-            <button
-              onClick={() => setRangeSubFilter('Essentials')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                rangeSubFilter === 'Essentials' ? 'bg-[#29abe2] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Essential Range
-            </button>
-            <button
-              onClick={() => setRangeSubFilter('Expert')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                rangeSubFilter === 'Expert' ? 'bg-[#071b45] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Expert Range
-            </button>
-          </div>
-
           {/* Manage markets dropdown */}
           <div className="relative" ref={selectorRef}>
             <button
               onClick={() => setIsSelectorOpen(!isSelectorOpen)}
               className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-[#0033a0] text-white rounded-xl hover:bg-[#071b45] transition-all shadow-xs cursor-pointer"
             >
-              <Plus size={15} /> Manage Markets ({selectedIds.length}/4)
+              <Plus size={15} /> Add another country ({selectedIds.length}/4)
             </button>
 
             {isSelectorOpen && (
@@ -345,9 +316,6 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
           <div className="space-y-6">
             {visiblePillars.map((pillar) => {
               let pillarCols = ALL_COLUMNS.filter((c) => c.pillar === pillar.id);
-              if (rangeSubFilter !== 'ALL') {
-                pillarCols = pillarCols.filter((c) => c.range === rangeSubFilter);
-              }
 
               if (pillarCols.length === 0) return null;
 

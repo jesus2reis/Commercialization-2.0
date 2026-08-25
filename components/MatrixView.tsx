@@ -291,7 +291,7 @@ export const MatrixView: React.FC<MatrixViewProps> = ({
   // =========================================================================
   if (!selectedPillar) {
     return (
-      <div className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8 animate-in fade-in duration-300">
+      <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 py-8 space-y-8 animate-in fade-in duration-300">
         
         {/* Interactive Header */}
         <div className="bg-gradient-to-r from-[#071b45] to-[#0033a0] text-white p-8 rounded-3xl shadow-xl space-y-3">
