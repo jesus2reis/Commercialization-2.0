@@ -90,17 +90,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>Strategy Matrix</span>
           </button>
 
-          {/* 4. Regional Heatmap */}
+          {/* 4. Comparison */}
           <button
-            onClick={() => onViewChange('heatmap')}
+            onClick={() => onViewChange('comparison')}
             className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
-              currentView === 'heatmap'
+              currentView === 'comparison'
                 ? 'bg-white text-[#0033a0] shadow-xs font-black'
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
             }`}
           >
-            <Grid3X3 size={15} />
-            <span>Heatmap</span>
+            <ArrowLeftRight size={15} />
+            <span>Comparison</span>
           </button>
 
           {/* 5. 6 Strategic Pillars */}
@@ -114,32 +114,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Layers size={15} />
             <span>6 Pillars</span>
-          </button>
-
-          {/* 6. Comparison */}
-          <button
-            onClick={() => onViewChange('comparison')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
-              currentView === 'comparison'
-                ? 'bg-white text-[#0033a0] shadow-xs font-black'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-            }`}
-          >
-            <ArrowLeftRight size={15} />
-            <span>Comparison</span>
-          </button>
-
-          {/* 7. Analytics */}
-          <button
-            onClick={() => onViewChange('analytics')}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
-              currentView === 'analytics'
-                ? 'bg-white text-[#0033a0] shadow-xs font-black'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
-            }`}
-          >
-            <BarChart3 size={15} />
-            <span>Analytics</span>
           </button>
 
         </nav>
