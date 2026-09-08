@@ -11,6 +11,7 @@ import { OnePagerPdfModal } from './components/OnePagerPdfModal';
 
 const App: React.FC = () => {
   const [markets, setMarkets] = useState<MarketPortfolioData[]>([]);
+  const [selectedMarketId, setSelectedMarketId] = useState<string | null>(null);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -46,6 +47,9 @@ const App: React.FC = () => {
       
       {/* Top Navigation */}
       <Navbar
+        markets={markets}
+        selectedMarketId={selectedMarketId}
+        setSelectedMarketId={setSelectedMarketId}
         onRandomize={handleRandomize}
         onOpenPdfModal={() => setIsPdfModalOpen(true)}
       />
@@ -54,6 +58,8 @@ const App: React.FC = () => {
       <main className="flex-1 pb-16">
         <GuidedCountryView
           markets={markets}
+          selectedMarketId={selectedMarketId}
+          setSelectedMarketId={setSelectedMarketId}
           onToggleProduct={handleToggleProduct}
         />
       </main>
@@ -64,11 +70,12 @@ const App: React.FC = () => {
           isOpen={isPdfModalOpen}
           onClose={() => setIsPdfModalOpen(false)}
           markets={markets}
-          initialCountryId={null}
+          initialCountryId={selectedMarketId}
         />
       )}
 
     </div>
   );
 };
+
 export default App;

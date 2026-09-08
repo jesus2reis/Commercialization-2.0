@@ -1,31 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { MarketPortfolioData, PillarId } from '../types';
 import { ALL_COLUMNS, PILLARS } from '../services/dataService';
-import { ChevronDown, MapPin, Search, AlertCircle, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { AlertCircle, CheckCircle2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { CountrySelector } from './CountrySelector';
 
 interface GuidedCountryViewProps {
   markets: MarketPortfolioData[];
+  selectedMarketId: string | null;
+  setSelectedMarketId: (id: string | null) => void;
   onToggleProduct: (marketId: string, columnId: string, currentValue: boolean) => void;
 }
 
 export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
   markets,
+  selectedMarketId,
+  setSelectedMarketId,
   onToggleProduct
 }) => {
-  const [selectedMarketId, setSelectedMarketId] = useState<string | null>(null);
   const [selectedPillarId, setSelectedPillarId] = useState<PillarId | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Reset pillar selection when changing market
   useEffect(() => {
     setSelectedPillarId(null);
   }, [selectedMarketId]);
-
-  const filteredMarkets = markets.filter(m => 
-    m.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    m.region.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const selectedMarket = markets.find(m => m.id === selectedMarketId);
 
@@ -44,65 +41,15 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
         </div>
       )}
 
-      {/* Country Selection Dropdown */}
-      <div className={`mx-auto relative z-50 transition-all duration-500 ${selectedMarket ? 'max-w-sm mb-8' : 'max-w-xl mb-16'}`}>
-        <div className={`bg-white rounded-2xl border border-slate-200 relative transition-all duration-500 ${selectedMarket ? 'shadow-md p-1.5' : 'shadow-xl p-2'}`}>
-          <div 
-            className={`flex items-center gap-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-all ${selectedMarket ? 'px-3 py-2' : 'px-4 py-3'}`}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
-            <MapPin className="text-[#0033a0]" size={selectedMarket ? 20 : 24} />
-            <div className="flex-1">
-              <div className={`font-bold text-slate-400 uppercase tracking-wider mb-0.5 transition-all ${selectedMarket ? 'text-[10px]' : 'text-xs'}`}>Primary Market</div>
-              <div className={`font-black text-slate-900 transition-all ${selectedMarket ? 'text-base' : 'text-lg'}`}>
-                {selectedMarket ? selectedMarket.country : 'Select a country...'}
-              </div>
-            </div>
-            <ChevronDown className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} size={selectedMarket ? 20 : 24} />
-          </div>
-
-          {isDropdownOpen && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50">
-              <div className="p-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50/50">
-                <Search size={16} className="text-slate-400" />
-                <input 
-                  type="text" 
-                  autoFocus
-                  placeholder="Search countries or regions..."
-                  className="flex-1 bg-transparent border-none focus:outline-none text-sm font-medium text-slate-900 placeholder:text-slate-400"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="max-h-80 overflow-y-auto custom-scrollbar p-2">
-                {filteredMarkets.length === 0 ? (
-                  <div className="p-4 text-center text-sm text-slate-500">No markets found.</div>
-                ) : (
-                  filteredMarkets.map(market => (
-                    <button
-                      key={market.id}
-                      onClick={() => {
-                        setSelectedMarketId(market.id);
-                        setIsDropdownOpen(false);
-                        setSearchQuery('');
-                      }}
-                      className={`w-full text-left px-4 py-3 rounded-xl flex items-center justify-between group transition-colors ${
-                        selectedMarketId === market.id ? 'bg-blue-50 text-[#0033a0]' : 'hover:bg-slate-50'
-                      }`}
-                    >
-                      <div>
-                        <span className="font-bold text-slate-900 block group-hover:text-[#0033a0]">{market.country}</span>
-                        <span className="text-xs text-slate-500">{market.region}</span>
-                      </div>
-                      {selectedMarketId === market.id && <CheckCircle2 size={16} className="text-[#0033a0]" />}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Country Selection Dropdown (Only show here if NOT selected) */}
+      {!selectedMarket && (
+        <CountrySelector 
+          markets={markets}
+          selectedMarketId={selectedMarketId}
+          setSelectedMarketId={setSelectedMarketId}
+          compact={false}
+        />
+      )}
 
       {/* Selected Country Details */}
       {selectedMarket && (
