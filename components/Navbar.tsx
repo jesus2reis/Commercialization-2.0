@@ -25,9 +25,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           
           {/* Title & Selector */}
           <div className="flex items-center gap-4 sm:gap-6 flex-1 min-w-0">
-            <span className="font-black text-base sm:text-xl text-[#0033a0] leading-none tracking-tight shrink-0">
+            <button onClick={() => setSelectedMarketId(null)} className="font-black text-base sm:text-xl text-[#0033a0] leading-none tracking-tight shrink-0 hover:opacity-80 transition-opacity text-left cursor-pointer">
               FME Commercialization 2.0
-            </span>
+            </button>
 
             {/* Render compact CountrySelector only when a market is selected */}
             {selectedMarketId && (

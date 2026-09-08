@@ -27,7 +27,7 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
   const selectedMarket = markets.find(m => m.id === selectedMarketId);
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-12 animate-in fade-in duration-500">
+    <div className={`w-full mx-auto px-4 animate-in fade-in duration-500 flex flex-col ${!selectedMarket ? 'max-w-5xl py-12' : !selectedPillarId ? 'max-w-7xl h-[calc(100vh-4rem)] py-6' : 'max-w-7xl py-6'}`}>
       
       {/* Header & Goal Statement */}
       {!selectedMarket && (
@@ -69,7 +69,7 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
 
           {!selectedPillarId ? (
             /* BENTO GRID OVERVIEW */
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 animate-in fade-in duration-300 flex-1 min-h-0">
               {PILLARS.map(pillar => {
                 const pillarCols = ALL_COLUMNS.filter(c => c.pillar === pillar.id);
                 if (pillarCols.length === 0) return null;
@@ -99,9 +99,9 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                   <button 
                     key={pillar.id}
                     onClick={() => setSelectedPillarId(pillar.id)}
-                    className="flex flex-col text-left bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-[#0033a0]/40 hover:-translate-y-1 transition-all overflow-hidden group"
+                    className="flex flex-col text-left bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-[#0033a0]/40 hover:-translate-y-1 transition-all overflow-hidden group h-full"
                   >
-                    <div className={`p-5 border-b border-slate-100 flex flex-col gap-2 ${pillar.badgeBg} transition-colors group-hover:bg-opacity-80`}>
+                    <div className={`p-4 xl:p-5 border-b border-slate-100 flex flex-col gap-2 ${pillar.badgeBg} transition-colors group-hover:bg-opacity-80 shrink-0`}>
                       <div className="flex justify-between items-start w-full gap-2">
                         <span className={`text-[10px] font-black uppercase tracking-wider ${pillar.badgeText}`}>
                           Strategic Pillar
@@ -113,7 +113,7 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                       <h3 className={`text-xl font-black ${pillar.badgeText}`}>{pillar.name}</h3>
                     </div>
                     
-                    <div className="p-5 flex-1 flex flex-col justify-between gap-6">
+                    <div className="p-4 xl:p-5 flex-1 flex flex-col justify-between gap-4">
                       <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
                         {pillar.tagline}
                       </p>

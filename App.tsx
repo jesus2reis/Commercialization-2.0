@@ -55,7 +55,7 @@ const App: React.FC = () => {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 pb-16">
+      <main className="flex-1 flex flex-col">
         <GuidedCountryView
           markets={markets}
           selectedMarketId={selectedMarketId}
