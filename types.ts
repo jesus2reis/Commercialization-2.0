@@ -40,7 +40,9 @@ export interface MarketPortfolioData {
   country: string;
   region: string;
   values: ProductValues; 
-  actionNeeded: Record<string, string[]>; // PillarId -> Array of unique non-empty 'action needed' messages
+  actionNeeded: Record<string, string[]>;
+  rangeActionNeeded: Record<string, Record<string, string>>;
+  rangeCompleteness: Record<string, Record<string, string>>;
 }
 
 export type ViewMode = 

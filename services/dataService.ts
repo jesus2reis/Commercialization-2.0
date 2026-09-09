@@ -140,6 +140,8 @@ export const fetchAndParseData = async (): Promise<AppData> => {
     const maxCols = headerRows.reduce((max, row) => Math.max(max, row.length), 0);
     const colMappings: { index: number, product: ParsedProduct }[] = [];
     const actionNeededCols: number[] = [];
+    const actionNeededRangeCols: { index: number, range: string }[] = [];
+    const completenessRangeCols: { index: number, range: string }[] = [];
 
     for (let j = 2; j < maxCols; j++) {
       const colPath: string[] = [];
@@ -154,11 +156,18 @@ export const fetchAndParseData = async (): Promise<AppData> => {
         const name = colPath.pop() as string;
         const lowerName = name.toLowerCase();
         
+        const isEssential = colPath.some(p => p.toLowerCase().includes('essential'));
+        const isExpert = colPath.some(p => p.toLowerCase().includes('expert'));
+        let range = '';
+        if (isEssential) range = 'essential';
+        if (isExpert) range = 'expert';
+        
         if (lowerName.includes('action needed')) {
           actionNeededCols.push(j);
-        } else if (!lowerName.includes('portfolio completeness')) {
-          const isEssential = colPath.some(p => p.toLowerCase().includes('essential'));
-          const isExpert = colPath.some(p => p.toLowerCase().includes('expert'));
+          if (range) actionNeededRangeCols.push({ index: j, range });
+        } else if (lowerName.includes('portfolio completeness')) {
+          if (range) completenessRangeCols.push({ index: j, range });
+        } else {
           const isMustHave = colPath.some(p => p.toLowerCase().includes('must-have'));
           const isNiceToHave = colPath.some(p => p.toLowerCase().includes('nice-to-have'));
           
@@ -194,7 +203,9 @@ export const fetchAndParseData = async (): Promise<AppData> => {
           region,
           country,
           values: {},
-          actionNeeded: {}
+          actionNeeded: {},
+          rangeActionNeeded: {},
+          rangeCompleteness: {}
         });
       }
 
@@ -204,10 +215,31 @@ export const fetchAndParseData = async (): Promise<AppData> => {
       if (!market.actionNeeded[pillar]) {
         market.actionNeeded[pillar] = [];
       }
+      if (!market.rangeActionNeeded[pillar]) {
+        market.rangeActionNeeded[pillar] = {};
+      }
+      if (!market.rangeCompleteness[pillar]) {
+        market.rangeCompleteness[pillar] = {};
+      }
+      
       actionNeededCols.forEach(idx => {
         const val = row[idx]?.trim();
         if (val && val.toLowerCase() !== 'no' && !market.actionNeeded[pillar].includes(val)) {
           market.actionNeeded[pillar].push(val);
+        }
+      });
+      
+      actionNeededRangeCols.forEach(({ index, range }) => {
+        const val = row[index]?.trim();
+        if (val) {
+          market.rangeActionNeeded[pillar][range] = val;
+        }
+      });
+      
+      completenessRangeCols.forEach(({ index, range }) => {
+        const val = row[index]?.trim();
+        if (val) {
+          market.rangeCompleteness[pillar][range] = val;
         }
       });
 

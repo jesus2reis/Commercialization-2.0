@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MarketPortfolioData, PillarId, ParsedProduct } from '../types';
 import { PILLARS } from '../services/dataService';
-import { ArrowLeft, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle2, Info } from 'lucide-react';
 import { CountrySelector } from './CountrySelector';
 
 interface GuidedCountryViewProps {
@@ -105,29 +105,37 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                   guidanceBg = "bg-emerald-100/50 text-emerald-800";
                 }
 
+                const actionNeededMessages = selectedMarket.actionNeeded[pillar.id] || [];
+                const validActionMessages = actionNeededMessages.filter(msg => msg && msg.toLowerCase() !== 'no' && msg.toLowerCase() !== 'none' && msg !== '-');
+                const hasAction = validActionMessages.length > 0;
+
                 return (
                   <button 
                     key={pillar.id}
                     onClick={() => setSelectedPillarId(pillar.id)}
-                    className="flex flex-col text-left bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-[#0033a0]/40 hover:-translate-y-1 transition-all overflow-hidden group h-full"
+                    className="flex flex-col text-left bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg hover:border-[#0033a0]/40 hover:-translate-y-1 transition-all overflow-visible group h-full relative"
                   >
-                    <div className={`p-4 xl:p-5 border-b border-slate-100 flex flex-col gap-2 ${pillar.badgeBg} transition-colors group-hover:bg-opacity-80 shrink-0`}>
+                    <div className={`p-4 xl:p-5 border-b border-slate-100 flex flex-col gap-2 ${pillar.badgeBg} transition-colors group-hover:bg-opacity-80 shrink-0 rounded-t-3xl`}>
                       <div className="flex justify-between items-start w-full gap-2">
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${pillar.badgeText}`}>
-                          Strategic Pillar
-                        </span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${guidanceBg} shrink-0`}>
-                          {guidanceTitle}
-                        </span>
+                        <div className="inline-flex items-center gap-3">
+                          <h3 className="text-2xl md:text-3xl font-bold text-[#071b45]">{pillar.name}</h3>
+                          {hasAction && (
+                            <div className="relative group/tooltip flex items-center">
+                              <Info 
+                                size={16} 
+                                className="text-amber-500 cursor-help" 
+                              />
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max bg-[#1E293B] text-white text-[11px] font-medium px-2.5 py-1.5 rounded-md shadow-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity z-50 pointer-events-none text-center">
+                                Action Needed
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-[#1E293B]" />
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <h3 className={`text-xl font-black ${pillar.badgeText}`}>{pillar.name}</h3>
                     </div>
                     
                     <div className="p-4 xl:p-5 flex-1 flex flex-col justify-between gap-4">
-                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                        {pillar.tagline}
-                      </p>
-                      
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-xs font-bold">
                           <span className="text-slate-500">Coverage</span>
@@ -249,11 +257,10 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                   <div key={pillar.id} className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-md">
                     <div className={`px-6 py-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 ${pillar.badgeBg}`}>
                       <div>
-                        <span className={`text-[10px] font-black uppercase tracking-wider ${pillar.badgeText}`}>
-                          Strategic Pillar Analysis
-                        </span>
                         <h3 className={`text-2xl font-black ${pillar.badgeText}`}>{pillar.name}</h3>
-                        <p className={`text-sm mt-1 opacity-80 ${pillar.badgeText} max-w-xl`}>{pillar.description}</p>
+                        <p className={`text-sm mt-1 opacity-80 ${pillar.badgeText} max-w-xl`}>
+                          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip.
+                        </p>
                       </div>
                       <div className="flex flex-col items-end shrink-0">
                         <span className="text-xs font-bold text-slate-500 mb-1">Pillar Coverage</span>
@@ -266,54 +273,103 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                     <div className="p-8 space-y-8">
                       <div className="flex flex-col xl:flex-row gap-8">
                         {essentials.length > 0 && (
-                          <div className="flex-1 min-w-0 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-5 print-avoid-break">
-                            <h4 className="text-[15px] font-black text-slate-900 border-b-2 border-slate-200/60 pb-3 mb-5 uppercase tracking-wide">
-                              Essential Range
-                            </h4>
-                            {renderProductGrid(essentials)}
+                          <div className="flex-1 min-w-0 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-5 print-avoid-break flex flex-col">
+                            <div className="flex justify-between items-center border-b-2 border-slate-200/60 pb-3 mb-5">
+                              <h4 className="text-[15px] font-black text-slate-900 uppercase tracking-wide">
+                                Essential Range
+                              </h4>
+                              {selectedMarket.rangeCompleteness?.[pillar.id]?.essential && (
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                  selectedMarket.rangeCompleteness[pillar.id].essential === 'Complete' ? 'bg-emerald-100/50 text-emerald-800' :
+                                  selectedMarket.rangeCompleteness[pillar.id].essential === 'Partial' ? 'bg-amber-100/60 text-[#B45309]' :
+                                  'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {selectedMarket.rangeCompleteness[pillar.id].essential}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              {renderProductGrid(essentials)}
+                            </div>
+                            <div className="mt-5 pt-5 border-t border-slate-200/60">
+                              {(() => {
+                                const action = selectedMarket.rangeActionNeeded?.[pillar.id]?.essential;
+                                const hasAction = action && action.toLowerCase() !== 'no' && action.toLowerCase() !== 'none' && action !== '-';
+                                if (hasAction) {
+                                  const text = action.toLowerCase() === 'yes' ? 'Action Needed' : action;
+                                  return (
+                                    <div className="bg-white border border-amber-200 rounded-xl p-4 shadow-sm flex items-start gap-3">
+                                      <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
+                                      <div>
+                                        <h5 className="text-sm font-bold text-slate-900 mb-0.5">Action Needed</h5>
+                                        <p className="text-xs text-slate-600">{text}</p>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <div className="bg-white/50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+                                    <CheckCircle2 className="text-slate-400 shrink-0 mt-0.5" size={18} />
+                                    <div>
+                                      <h5 className="text-sm font-bold text-slate-600 mb-0.5">No Action Needed</h5>
+                                      <p className="text-xs text-slate-500">Requirements are fulfilled for this range.</p>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </div>
                           </div>
                         )}
 
                         {experts.length > 0 && (
-                          <div className="flex-1 min-w-0 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-5 print-avoid-break">
-                            <h4 className="text-[15px] font-black text-slate-900 border-b-2 border-slate-200/60 pb-3 mb-5 uppercase tracking-wide">
-                              Expert Range
-                            </h4>
-                            {renderProductGrid(experts)}
+                          <div className="flex-1 min-w-0 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-5 print-avoid-break flex flex-col">
+                            <div className="flex justify-between items-center border-b-2 border-slate-200/60 pb-3 mb-5">
+                              <h4 className="text-[15px] font-black text-slate-900 uppercase tracking-wide">
+                                Expert Range
+                              </h4>
+                              {selectedMarket.rangeCompleteness?.[pillar.id]?.expert && (
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                  selectedMarket.rangeCompleteness[pillar.id].expert === 'Complete' ? 'bg-emerald-100/50 text-emerald-800' :
+                                  selectedMarket.rangeCompleteness[pillar.id].expert === 'Partial' ? 'bg-amber-100/60 text-[#B45309]' :
+                                  'bg-slate-100 text-slate-600'
+                                }`}>
+                                  {selectedMarket.rangeCompleteness[pillar.id].expert}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              {renderProductGrid(experts)}
+                            </div>
+                            <div className="mt-5 pt-5 border-t border-slate-200/60">
+                              {(() => {
+                                const action = selectedMarket.rangeActionNeeded?.[pillar.id]?.expert;
+                                const hasAction = action && action.toLowerCase() !== 'no' && action.toLowerCase() !== 'none' && action !== '-';
+                                if (hasAction) {
+                                  const text = action.toLowerCase() === 'yes' ? 'Action Needed' : action;
+                                  return (
+                                    <div className="bg-white border border-amber-200 rounded-xl p-4 shadow-sm flex items-start gap-3">
+                                      <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
+                                      <div>
+                                        <h5 className="text-sm font-bold text-slate-900 mb-0.5">Action Needed</h5>
+                                        <p className="text-xs text-slate-600">{text}</p>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <div className="bg-white/50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+                                    <CheckCircle2 className="text-slate-400 shrink-0 mt-0.5" size={18} />
+                                    <div>
+                                      <h5 className="text-sm font-bold text-slate-600 mb-0.5">No Action Needed</h5>
+                                      <p className="text-xs text-slate-500">Requirements are fulfilled for this range.</p>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+                            </div>
                           </div>
                         )}
                       </div>
-
-                      {/* Action Needed Block */}
-                      {actionNeededMessages.length > 0 ? (
-                        <div className="bg-amber-50/50 border border-amber-200 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-6 items-start mt-12 print-avoid-break">
-                          <div className="p-3 bg-amber-100 rounded-2xl text-amber-600 shrink-0">
-                            <AlertCircle size={24} />
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-black text-amber-900 mb-3">Action Needed</h4>
-                            <ul className="space-y-2">
-                              {actionNeededMessages.map((msg, i) => (
-                                <li key={i} className="text-amber-800 text-sm flex items-start gap-2">
-                                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                                  <span className="leading-relaxed">{msg}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="bg-slate-50 border border-slate-200 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-6 items-center mt-12 print-avoid-break">
-                          <div className="p-3 bg-slate-100 rounded-2xl text-slate-400 shrink-0">
-                            <CheckCircle2 size={24} />
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-bold text-slate-700">No Action Needed</h4>
-                            <p className="text-slate-500 text-sm mt-1">This market is fully aligned for this pillar.</p>
-                          </div>
-                        </div>
-                      )}
-
                     </div>
                   </div>
                 );
