@@ -19,17 +19,6 @@ const getProductState = (val: string) => {
   return 'alternative';
 };
 
-const cleanBreadcrumbs = (path: string[]) => {
-  const blacklist = [
-    'portfolio', 'portoflio',
-    'essentials range', 'essential range', 'expert range', 
-    'must-have portfolio', 'must-have', 
-    'nice-to-have portfolio', 'nice-to-have'
-  ];
-  const cleaned = path.filter(p => p && !blacklist.includes(p.toLowerCase().trim()));
-  return cleaned.length > 0 ? cleaned.join(' / ') : null;
-};
-
 export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
   markets,
   products,
@@ -192,66 +181,95 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                   return <span className={`${titleStyle} mt-1 block text-[13px] font-semibold leading-tight`}>{name}</span>;
                 };
 
-                const renderProductGrid = (productList: ParsedProduct[]) => (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {productList.map(product => {
-                      const rawValue = selectedMarket.values[product.id] || '';
-                      const state = getProductState(rawValue);
-                      const breadcrumbs = cleanBreadcrumbs(product.categoryPath);
-                      const defaultTagText = product.isMustHave ? 'Must-have' : product.isNiceToHave ? 'Nice-to-have' : 'Standard';
-                      
-                      let cardStyle = 'bg-slate-50 border-slate-200 opacity-60';
-                      let nameStyle = 'text-slate-500';
-                      let importanceBadgeStyle = 'bg-slate-200 text-slate-500';
-                      let statusBadge: { text: string, style: string } | null = null;
+                const renderProductCard = (product: ParsedProduct) => {
+                  const rawValue = selectedMarket.values[product.id] || '';
+                  const state = getProductState(rawValue);
+                  
+                  let cardStyle = 'bg-slate-50 border-slate-200 opacity-60';
+                  let nameStyle = 'text-slate-500';
+                  let statusBadge: { text: string, style: string } | null = null;
 
-                      if (state === 'active') {
-                        cardStyle = 'bg-emerald-50/50 border-emerald-200 shadow-sm';
-                        nameStyle = 'text-emerald-900';
-                        importanceBadgeStyle = 'bg-emerald-100 text-emerald-800';
-                      } else if (state === 'alternative') {
-                        cardStyle = 'bg-[#FEFCE8] border-[#FDE047] shadow-sm';
-                        nameStyle = 'text-amber-900';
-                        importanceBadgeStyle = 'bg-amber-100/50 text-amber-700';
-                        statusBadge = { text: rawValue, style: 'bg-[#FEF08A] text-[#854D0E]' };
-                      } else if (state === 'not_available') {
-                        cardStyle = 'bg-slate-50 border-slate-200';
-                        nameStyle = 'text-slate-500';
-                        importanceBadgeStyle = 'bg-slate-200 text-slate-500';
-                        statusBadge = { text: 'Currently not available', style: 'bg-amber-100 text-amber-800' };
-                      }
+                  if (state === 'active') {
+                    cardStyle = 'bg-emerald-50/50 border-emerald-200 shadow-sm';
+                    nameStyle = 'text-emerald-900';
+                  } else if (state === 'alternative') {
+                    cardStyle = 'bg-[#FEFCE8] border-[#FDE047] shadow-sm';
+                    nameStyle = 'text-amber-900';
+                    statusBadge = { text: rawValue, style: 'bg-[#FEF08A] text-[#854D0E]' };
+                  } else if (state === 'not_available') {
+                    cardStyle = 'bg-slate-50 border-slate-200';
+                    nameStyle = 'text-slate-500';
+                    statusBadge = { text: 'Currently not available', style: 'bg-amber-100 text-amber-800' };
+                  }
 
-                      return (
-                        <div
-                          key={product.id}
-                          className={`px-4 py-3 rounded-xl border transition-colors flex flex-col justify-between print-avoid-break ${cardStyle}`}
-                        >
-                          <div>
-                            {breadcrumbs && (
-                              <div className="w-full mb-1.5">
-                                <span className="text-[8px] font-semibold text-slate-500 leading-tight block w-full">
-                                  {breadcrumbs}
-                                </span>
-                              </div>
-                            )}
-                            {renderProductName(product.name, nameStyle)}
-                          </div>
-                          
-                          <div className="flex flex-wrap items-center gap-1.5 justify-end mt-3 w-full">
-                            <span className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded ${importanceBadgeStyle}`}>
-                              {defaultTagText}
+                  return (
+                    <div
+                      key={product.id}
+                      className={`px-4 py-3 rounded-xl border transition-colors flex flex-col justify-between print-avoid-break ${cardStyle}`}
+                    >
+                      <div>
+                        {product.label && (
+                          <div className="w-full mb-1">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider leading-tight block w-full">
+                              {product.label}
                             </span>
-                            {statusBadge && (
-                              <span className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded ${statusBadge.style}`}>
-                                {statusBadge.text}
-                              </span>
-                            )}
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
+                        )}
+                        {renderProductName(product.name, nameStyle)}
+                      </div>
+                      
+                      {statusBadge && (
+                         <div className="flex flex-wrap items-center gap-1.5 justify-end mt-3 w-full">
+                           <span className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded ${statusBadge.style}`}>
+                             {statusBadge.text}
+                           </span>
+                         </div>
+                      )}
+                    </div>
+                  );
+                };
+
+                const isHD = pillar.id === 'hd' || pillar.id === 'hvhdf';
+
+                const renderProductGrid = (productList: ParsedProduct[]) => {
+                  if (isHD) {
+                    const mustHave = productList.filter(p => p.requirement === 'Must-have portfolio');
+                    const niceToHave = productList.filter(p => p.requirement === 'Nice-to-have portfolio');
+                    const unassigned = productList.filter(p => !p.requirement);
+
+                    return (
+                      <div className="flex flex-col gap-4">
+                        {mustHave.length > 0 && (
+                          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                            <h5 className="text-sm font-bold text-[#071b45] mb-3">Must-have portfolio</h5>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {mustHave.map(renderProductCard)}
+                            </div>
+                          </div>
+                        )}
+                        {niceToHave.length > 0 && (
+                          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                            <h5 className="text-sm font-bold text-[#071b45] mb-3">Nice-to-have portfolio</h5>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {niceToHave.map(renderProductCard)}
+                            </div>
+                          </div>
+                        )}
+                        {unassigned.length > 0 && (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                            {unassigned.map(renderProductCard)}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {productList.map(renderProductCard)}
+                      </div>
+                    );
+                  }
+                };
 
                 return (
                   <div key={pillar.id} className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-md">

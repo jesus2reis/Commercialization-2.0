@@ -26,6 +26,10 @@ export interface ParsedProduct {
   pillarId: PillarId;
   name: string;
   categoryPath: string[]; 
+  category: string | null;
+  subcategory: string | null;
+  requirement: 'Must-have portfolio' | 'Nice-to-have portfolio' | null;
+  label: string | null;
   isEssential: boolean;   
   isExpert: boolean;      
   isMustHave: boolean;

@@ -110,82 +110,130 @@ export const fetchAndParseData = async (): Promise<AppData> => {
     const csvText = await res.text();
     const { data } = Papa.parse<string[]>(csvText, { skipEmptyLines: true });
 
-    let firstDataRowIdx = -1;
+    let firstDataRow = -1;
     for (let i = 0; i < data.length; i++) {
-      const r0 = data[i][0]?.trim();
-      if (r0 && r0 !== 'Region' && data[i][1]?.trim() && data[i][1]?.trim() !== 'Country') {
-        firstDataRowIdx = i;
+      const r0 = (data[i][0] || '').trim().toUpperCase();
+      const r1 = (data[i][1] || '').trim();
+      const isRegion = ['EMEA EAST', 'LATAM', 'EMEA WEST', 'APAC', 'NORTH AMERICA'].includes(r0);
+      const isRealCountry = r1 && r1.toLowerCase() !== 'country';
+      if (isRegion || isRealCountry) {
+        firstDataRow = i;
         break;
       }
     }
 
-    if (firstDataRowIdx === -1) continue;
+    if (firstDataRow < 1) continue;
 
-    const headerRows = data.slice(0, firstDataRowIdx);
-    const dataRows = data.slice(firstDataRowIdx);
+    const productRowIndex = firstDataRow - 1;
+    const headerRows = data.slice(0, productRowIndex);
+    const dataRows = data.slice(firstDataRow);
+    const productRow = data[productRowIndex];
+    const maxCols = productRow.length;
 
-    for (let i = 0; i < headerRows.length; i++) {
-      let lastVal = '';
-      for (let j = 2; j < headerRows[i].length; j++) {
-        const val = headerRows[i][j]?.trim() || '';
-        if (val !== '') {
-          lastVal = val;
-          headerRows[i][j] = val;
-        } else {
-          headerRows[i][j] = lastVal;
+    // Horizontal forward-fill for ancestors starting from column 2
+    const filledHeaders = Array.from({ length: productRowIndex }, () => new Array(maxCols).fill(''));
+    for (let i = 0; i < productRowIndex; i++) {
+      let currentVal = '';
+      for (let j = 2; j < maxCols; j++) {
+        const val = (headerRows[i]?.[j] || '').trim();
+        
+        // Reset propagation when crossing range boundaries on row 1
+        if (i > 1 && headerRows[1]?.[j]?.trim()) {
+          currentVal = ''; 
         }
+        
+        if (val !== '') {
+          currentVal = val;
+        }
+        filledHeaders[i][j] = currentVal;
       }
     }
 
-    const maxCols = headerRows.reduce((max, row) => Math.max(max, row.length), 0);
     const colMappings: { index: number, product: ParsedProduct }[] = [];
     const actionNeededCols: number[] = [];
     const actionNeededRangeCols: { index: number, range: string }[] = [];
     const completenessRangeCols: { index: number, range: string }[] = [];
 
     for (let j = 2; j < maxCols; j++) {
-      const colPath: string[] = [];
-      for (let i = 0; i < headerRows.length; i++) {
-        const val = headerRows[i][j]?.trim() || '';
-        if (val && colPath[colPath.length - 1] !== val) {
-          colPath.push(val.replace(/\n/g, ' '));
-        }
-      }
+      const rawName = (productRow[j] || '').trim().replace(/\n/g, ' ');
+      if (!rawName) continue;
       
-      if (colPath.length > 0) {
-        const name = colPath.pop() as string;
-        const lowerName = name.toLowerCase();
+      const lowerName = rawName.toLowerCase();
+      
+      let rangeVal = '';
+      let req: 'Must-have portfolio' | 'Nice-to-have portfolio' | null = null;
+      let category: string | null = null;
+      let subcategory: string | null = null;
+
+      if (pillar === 'hd' || pillar === 'hvhdf') {
+        rangeVal = filledHeaders[1]?.[j] || '';
+        const rVal = (filledHeaders[2]?.[j] || '').toLowerCase();
+        if (rVal.includes('must-have')) req = 'Must-have portfolio';
+        else if (rVal.includes('nice-to-have')) req = 'Nice-to-have portfolio';
         
-        const isEssential = colPath.some(p => p.toLowerCase().includes('essential'));
-        const isExpert = colPath.some(p => p.toLowerCase().includes('expert'));
-        let range = '';
-        if (isEssential) range = 'essential';
-        if (isExpert) range = 'expert';
-        
-        if (lowerName.includes('action needed')) {
-          actionNeededCols.push(j);
-          if (range) actionNeededRangeCols.push({ index: j, range });
-        } else if (lowerName.includes('portfolio completeness')) {
-          if (range) completenessRangeCols.push({ index: j, range });
-        } else {
-          const isMustHave = colPath.some(p => p.toLowerCase().includes('must-have'));
-          const isNiceToHave = colPath.some(p => p.toLowerCase().includes('nice-to-have'));
-          
-          const product: ParsedProduct = {
-            id: `${pillar}_${j}`,
-            pillarId: pillar,
-            name,
-            categoryPath: colPath,
-            isEssential,
-            isExpert,
-            isMustHave,
-            isNiceToHave
-          };
-          
-          colMappings.push({ index: j, product });
-          allProducts.push(product);
+        category = filledHeaders[3]?.[j] || null;
+        subcategory = filledHeaders[4]?.[j] || null;
+
+        const resetKeywords = [
+          'acid concentrates', 'citrosteril', 'puristeril', 'sporotal',
+          'granumix', 'cds', 'smartbag', 'technical service', 'application consultancy'
+        ];
+        if (resetKeywords.some(kw => lowerName.includes(kw))) {
+          category = null;
+          subcategory = null;
         }
+      } 
+      else if (pillar === 'personalization' || pillar === 'services' || pillar === 'digital') {
+        rangeVal = filledHeaders[1]?.[j] || '';
+        category = filledHeaders[2]?.[j] || null;
+        
+        if (pillar === 'digital' && category?.toLowerCase() === 'tdms') {
+          if (!lowerName.includes('tmon') && !lowerName.includes('tss')) {
+            category = null;
+          }
+        }
+      } 
+      else if (pillar === 'sustainability') {
+        // Row 0 is Winning Portfolio (ignored), Row 1 is Range
+        rangeVal = filledHeaders[1]?.[j] || '';
       }
+
+      const isEssential = rangeVal.toLowerCase().includes('essential');
+      const isExpert = rangeVal.toLowerCase().includes('expert');
+      let range = isEssential ? 'essential' : (isExpert ? 'expert' : '');
+
+      if (lowerName.includes('portfolio completeness')) {
+        if (range) completenessRangeCols.push({ index: j, range });
+        continue;
+      }
+      if (lowerName.includes('action needed')) {
+        actionNeededCols.push(j);
+        if (range) actionNeededRangeCols.push({ index: j, range });
+        continue;
+      }
+
+      let labelParts = [];
+      if (category) labelParts.push(category);
+      if (subcategory) labelParts.push(subcategory);
+      const label = labelParts.length > 0 ? labelParts.join(' / ') : null;
+
+      const product: ParsedProduct = {
+        id: `${pillar}_${j}`,
+        pillarId: pillar,
+        name: rawName,
+        categoryPath: [],
+        category,
+        subcategory,
+        requirement: req,
+        label,
+        isEssential,
+        isExpert,
+        isMustHave: req === 'Must-have portfolio',
+        isNiceToHave: req === 'Nice-to-have portfolio'
+      };
+      
+      colMappings.push({ index: j, product });
+      allProducts.push(product);
     }
 
     dataRows.forEach(row => {
