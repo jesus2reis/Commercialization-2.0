@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { MarketPortfolioData, PillarId, ParsedProduct } from '../types';
 import { PILLARS } from '../services/dataService';
-import { ArrowLeft, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { ArrowLeft, AlertCircle, CheckCircle2, Info, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
 import { CountrySelector } from './CountrySelector';
+import { NotesDrawer } from './NotesDrawer';
 
 interface GuidedCountryViewProps {
   markets: MarketPortfolioData[];
@@ -19,6 +20,89 @@ const getProductState = (val: string) => {
   return 'alternative';
 };
 
+const StaticBentoBox = ({ title, products, renderCard }: { title: string, products: ParsedProduct[], renderCard: (p: ParsedProduct) => JSX.Element }) => {
+  if (products.length === 0) return null;
+
+  return (
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden h-fit flex flex-col">
+      <div className="w-full p-3.5 pb-2 bg-white text-left">
+        <h5 className="text-xs font-semibold text-[#071b45]">
+          {title}
+        </h5>
+      </div>
+      <div className="p-3.5 pt-1">
+        <div className="grid grid-cols-2 xl:grid-cols-3 gap-2.5">
+          {products.map(renderCard)}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CollapsibleRange = ({ 
+  title, 
+  completenessLabel, 
+  completenessStyle, 
+  hasActionNeeded,
+  actionNeededNode, 
+  children 
+}: { 
+  title: string;
+  completenessLabel?: string;
+  completenessStyle?: string;
+  hasActionNeeded?: boolean;
+  actionNeededNode: React.ReactNode;
+  children: React.ReactNode;
+}) => {
+  const [isOpen, setIsOpen] = useState(true);
+
+  return (
+    <div className="w-full bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl print-avoid-break flex flex-col">
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex justify-between items-center bg-transparent hover:bg-[#F1F5F9] transition-colors w-full p-5 text-left border-b-2 rounded-t-2xl ${isOpen ? 'border-slate-200/60' : 'border-transparent rounded-b-2xl'}`}
+      >
+        <div className="flex items-center gap-4">
+          <h4 className="text-[15px] font-black text-slate-900 uppercase tracking-wide">
+            {title}
+          </h4>
+          <div className="flex items-center gap-2">
+            {completenessLabel && (
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${completenessStyle}`}>
+                {completenessLabel}
+              </span>
+            )}
+            {!isOpen && hasActionNeeded && (
+              <div 
+                className="relative group/tooltip flex items-center"
+                onClick={(e) => e.stopPropagation()} // Prevent toggling when hovering/clicking tooltip icon if needed, though it's a button so bubble is okay. Stopping just in case.
+              >
+                <AlertCircle size={16} className="text-amber-500 cursor-help" />
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max bg-[#1E293B] text-white text-[11px] font-medium px-2.5 py-1.5 rounded-md shadow-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity z-50 pointer-events-none text-center">
+                  Action Needed
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-[#1E293B]" />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        {isOpen ? <ChevronUp size={20} className="text-slate-400 shrink-0" /> : <ChevronDown size={20} className="text-slate-400 shrink-0" />}
+      </button>
+      
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="p-5 flex flex-col h-full">
+          <div className="flex-1">
+            {children}
+          </div>
+          <div className="mt-5 pt-5 border-t border-slate-200/60">
+            {actionNeededNode}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
   markets,
   products,
@@ -26,6 +110,14 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
   setSelectedMarketId,
 }) => {
   const [selectedPillarId, setSelectedPillarId] = useState<PillarId | null>(null);
+  const [notesDrawerState, setNotesDrawerState] = useState<{
+    isOpen: boolean;
+    rangeId: string;
+    pillarId: string;
+    pillarName: string;
+    rangeName: string;
+  } | null>(null);
+  const [notesUpdateCounter, setNotesUpdateCounter] = useState(0);
 
   useEffect(() => {
     setSelectedPillarId(null);
@@ -172,13 +264,13 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                   const match = name.match(/^(.*?)\s*(\(.*?\))\s*$/);
                   if (match) {
                     return (
-                      <div className="flex flex-col gap-0.5 mt-1">
-                        <span className={`${titleStyle} text-[13px] font-semibold leading-tight`}>{match[1]}</span>
+                      <div className="flex flex-col mt-0.5">
+                        <span className={`${titleStyle} text-[13px] font-medium leading-tight`}>{match[1]}</span>
                         <span className="text-[11px] font-normal text-slate-500 leading-tight">{match[2]}</span>
                       </div>
                     );
                   }
-                  return <span className={`${titleStyle} mt-1 block text-[13px] font-semibold leading-tight`}>{name}</span>;
+                  return <span className={`${titleStyle} mt-0.5 block text-[13px] font-medium leading-tight`}>{name}</span>;
                 };
 
                 const renderProductCard = (product: ParsedProduct) => {
@@ -205,12 +297,12 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                   return (
                     <div
                       key={product.id}
-                      className={`px-4 py-3 rounded-xl border transition-colors flex flex-col justify-between print-avoid-break ${cardStyle}`}
+                      className={`px-3 py-2 min-h-[48px] rounded-xl border transition-colors flex flex-col justify-between print-avoid-break ${cardStyle}`}
                     >
                       <div>
                         {product.label && (
-                          <div className="w-full mb-1">
-                            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider leading-tight block w-full">
+                          <div className="w-full mb-0.5">
+                            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider leading-none block w-full">
                               {product.label}
                             </span>
                           </div>
@@ -219,7 +311,7 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                       </div>
                       
                       {statusBadge && (
-                         <div className="flex flex-wrap items-center gap-1.5 justify-end mt-3 w-full">
+                         <div className="flex flex-wrap items-center gap-1.5 justify-end mt-2 w-full">
                            <span className={`text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded ${statusBadge.style}`}>
                              {statusBadge.text}
                            </span>
@@ -238,33 +330,23 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                     const unassigned = productList.filter(p => !p.requirement);
 
                     return (
-                      <div className="flex flex-col gap-4">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
                         {mustHave.length > 0 && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-                            <h5 className="text-sm font-bold text-[#071b45] mb-3">Must-have portfolio</h5>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {mustHave.map(renderProductCard)}
-                            </div>
-                          </div>
+                          <StaticBentoBox title="Must-have portfolio" products={mustHave} renderCard={renderProductCard} />
                         )}
                         {niceToHave.length > 0 && (
-                          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-                            <h5 className="text-sm font-bold text-[#071b45] mb-3">Nice-to-have portfolio</h5>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {niceToHave.map(renderProductCard)}
-                            </div>
-                          </div>
+                          <StaticBentoBox title="Nice-to-have portfolio" products={niceToHave} renderCard={renderProductCard} />
                         )}
                         {unassigned.length > 0 && (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-                            {unassigned.map(renderProductCard)}
+                          <div className="col-span-full">
+                            <StaticBentoBox title="Other portfolio" products={unassigned} renderCard={renderProductCard} />
                           </div>
                         )}
                       </div>
                     );
                   } else {
                     return (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                         {productList.map(renderProductCard)}
                       </div>
                     );
@@ -289,44 +371,40 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                     </div>
 
                     <div className="p-8 space-y-8">
-                      <div className="flex flex-col xl:flex-row gap-8">
+                      <div className="flex flex-col gap-8">
                         {essentials.length > 0 && (
-                          <div className="flex-1 min-w-0 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-5 print-avoid-break flex flex-col">
-                            <div className="flex justify-between items-center border-b-2 border-slate-200/60 pb-3 mb-5">
-                              <h4 className="text-[15px] font-black text-slate-900 uppercase tracking-wide">
-                                Essential Range
-                              </h4>
-                              {selectedMarket.rangeCompleteness?.[pillar.id]?.essential && (
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                                  selectedMarket.rangeCompleteness[pillar.id].essential === 'Complete' ? 'bg-emerald-100/50 text-emerald-800' :
-                                  selectedMarket.rangeCompleteness[pillar.id].essential === 'Partial' ? 'bg-amber-100/60 text-[#B45309]' :
-                                  'bg-slate-100 text-slate-600'
-                                }`}>
-                                  {selectedMarket.rangeCompleteness[pillar.id].essential}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              {renderProductGrid(essentials)}
-                            </div>
-                            <div className="mt-5 pt-5 border-t border-slate-200/60">
-                              {(() => {
+                          <CollapsibleRange
+                            title="Essential Range"
+                            completenessLabel={selectedMarket.rangeCompleteness?.[pillar.id]?.essential}
+                            completenessStyle={
+                              selectedMarket.rangeCompleteness?.[pillar.id]?.essential === 'Complete' ? 'bg-emerald-100/50 text-emerald-800' :
+                              selectedMarket.rangeCompleteness?.[pillar.id]?.essential === 'Partial' ? 'bg-amber-100/60 text-[#B45309]' :
+                              'bg-slate-100 text-slate-600'
+                            }
+                            hasActionNeeded={
+                              !!(selectedMarket.rangeActionNeeded?.[pillar.id]?.essential && 
+                              selectedMarket.rangeActionNeeded?.[pillar.id]?.essential?.toLowerCase() !== 'no' && 
+                              selectedMarket.rangeActionNeeded?.[pillar.id]?.essential?.toLowerCase() !== 'none' && 
+                              selectedMarket.rangeActionNeeded?.[pillar.id]?.essential !== '-')
+                            }
+                            actionNeededNode={(() => {
                                 const action = selectedMarket.rangeActionNeeded?.[pillar.id]?.essential;
                                 const hasAction = action && action.toLowerCase() !== 'no' && action.toLowerCase() !== 'none' && action !== '-';
-                                if (hasAction) {
-                                  const text = action.toLowerCase() === 'yes' ? 'Action Needed' : action;
-                                  return (
-                                    <div className="bg-white border border-amber-200 rounded-xl p-4 shadow-sm flex items-start gap-3">
-                                      <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
-                                      <div>
-                                        <h5 className="text-sm font-bold text-slate-900 mb-0.5">Action Needed</h5>
-                                        <p className="text-xs text-slate-600">{text}</p>
-                                      </div>
+                                
+                                const storageKey = `notes_${selectedMarket.id}_${pillar.id}_essential`;
+                                const savedNotes = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                                const notesCount = savedNotes.length;
+
+                                const ActionContent = hasAction ? (
+                                  <div className="flex items-start gap-3">
+                                    <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
+                                    <div>
+                                      <h5 className="text-sm font-bold text-slate-900 mb-0.5">Action Needed</h5>
+                                      <p className="text-xs text-slate-600">{action.toLowerCase() === 'yes' ? 'Action Needed' : action}</p>
                                     </div>
-                                  );
-                                }
-                                return (
-                                  <div className="bg-white/50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+                                  </div>
+                                ) : (
+                                  <div className="flex items-start gap-3">
                                     <CheckCircle2 className="text-slate-400 shrink-0 mt-0.5" size={18} />
                                     <div>
                                       <h5 className="text-sm font-bold text-slate-600 mb-0.5">No Action Needed</h5>
@@ -334,48 +412,65 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                                     </div>
                                   </div>
                                 );
-                              })()}
-                            </div>
-                          </div>
+                                
+                                return (
+                                  <div className={`border rounded-xl p-4 flex flex-row items-center justify-between gap-4 ${hasAction ? 'bg-white border-amber-200 shadow-sm' : 'bg-white/50 border-slate-200'}`}>
+                                    {ActionContent}
+                                    <button 
+                                      onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        setNotesDrawerState({ isOpen: true, rangeId: 'essential', pillarId: pillar.id, pillarName: pillar.name, rangeName: 'Essential Range' }); 
+                                      }}
+                                      className={`px-3 py-1.5 text-xs font-medium border rounded-lg transition-all duration-150 flex items-center gap-1.5 shrink-0 ${
+                                        notesCount > 0
+                                          ? 'bg-[#071b45]/10 border-[#071b45]/30 text-[#071b45] hover:bg-[#071b45]/20 hover:border-[#071b45]/50 cursor-pointer'
+                                          : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50 cursor-pointer'
+                                      }`}
+                                    >
+                                      <MessageSquare size={14} className={notesCount > 0 ? "fill-current" : ""} />
+                                      Notes {notesCount > 0 && <span className="bg-[#071b45] text-white font-semibold text-[11px] px-2 py-0.5 rounded-full shadow-sm">{notesCount}</span>}
+                                    </button>
+                                  </div>
+                                );
+                            })()}
+                          >
+                            {renderProductGrid(essentials)}
+                          </CollapsibleRange>
                         )}
 
                         {experts.length > 0 && (
-                          <div className="flex-1 min-w-0 bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl p-5 print-avoid-break flex flex-col">
-                            <div className="flex justify-between items-center border-b-2 border-slate-200/60 pb-3 mb-5">
-                              <h4 className="text-[15px] font-black text-slate-900 uppercase tracking-wide">
-                                Expert Range
-                              </h4>
-                              {selectedMarket.rangeCompleteness?.[pillar.id]?.expert && (
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                                  selectedMarket.rangeCompleteness[pillar.id].expert === 'Complete' ? 'bg-emerald-100/50 text-emerald-800' :
-                                  selectedMarket.rangeCompleteness[pillar.id].expert === 'Partial' ? 'bg-amber-100/60 text-[#B45309]' :
-                                  'bg-slate-100 text-slate-600'
-                                }`}>
-                                  {selectedMarket.rangeCompleteness[pillar.id].expert}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              {renderProductGrid(experts)}
-                            </div>
-                            <div className="mt-5 pt-5 border-t border-slate-200/60">
-                              {(() => {
+                          <CollapsibleRange
+                            title="Expert Range"
+                            completenessLabel={selectedMarket.rangeCompleteness?.[pillar.id]?.expert}
+                            completenessStyle={
+                              selectedMarket.rangeCompleteness?.[pillar.id]?.expert === 'Complete' ? 'bg-emerald-100/50 text-emerald-800' :
+                              selectedMarket.rangeCompleteness?.[pillar.id]?.expert === 'Partial' ? 'bg-amber-100/60 text-[#B45309]' :
+                              'bg-slate-100 text-slate-600'
+                            }
+                            hasActionNeeded={
+                              !!(selectedMarket.rangeActionNeeded?.[pillar.id]?.expert && 
+                              selectedMarket.rangeActionNeeded?.[pillar.id]?.expert?.toLowerCase() !== 'no' && 
+                              selectedMarket.rangeActionNeeded?.[pillar.id]?.expert?.toLowerCase() !== 'none' && 
+                              selectedMarket.rangeActionNeeded?.[pillar.id]?.expert !== '-')
+                            }
+                            actionNeededNode={(() => {
                                 const action = selectedMarket.rangeActionNeeded?.[pillar.id]?.expert;
                                 const hasAction = action && action.toLowerCase() !== 'no' && action.toLowerCase() !== 'none' && action !== '-';
-                                if (hasAction) {
-                                  const text = action.toLowerCase() === 'yes' ? 'Action Needed' : action;
-                                  return (
-                                    <div className="bg-white border border-amber-200 rounded-xl p-4 shadow-sm flex items-start gap-3">
-                                      <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
-                                      <div>
-                                        <h5 className="text-sm font-bold text-slate-900 mb-0.5">Action Needed</h5>
-                                        <p className="text-xs text-slate-600">{text}</p>
-                                      </div>
+                                
+                                const storageKey = `notes_${selectedMarket.id}_${pillar.id}_expert`;
+                                const savedNotes = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                                const notesCount = savedNotes.length;
+
+                                const ActionContent = hasAction ? (
+                                  <div className="flex items-start gap-3">
+                                    <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
+                                    <div>
+                                      <h5 className="text-sm font-bold text-slate-900 mb-0.5">Action Needed</h5>
+                                      <p className="text-xs text-slate-600">{action.toLowerCase() === 'yes' ? 'Action Needed' : action}</p>
                                     </div>
-                                  );
-                                }
-                                return (
-                                  <div className="bg-white/50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+                                  </div>
+                                ) : (
+                                  <div className="flex items-start gap-3">
                                     <CheckCircle2 className="text-slate-400 shrink-0 mt-0.5" size={18} />
                                     <div>
                                       <h5 className="text-sm font-bold text-slate-600 mb-0.5">No Action Needed</h5>
@@ -383,9 +478,30 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                                     </div>
                                   </div>
                                 );
-                              })()}
-                            </div>
-                          </div>
+                                
+                                return (
+                                  <div className={`border rounded-xl p-4 flex flex-row items-center justify-between gap-4 ${hasAction ? 'bg-white border-amber-200 shadow-sm' : 'bg-white/50 border-slate-200'}`}>
+                                    {ActionContent}
+                                    <button 
+                                      onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        setNotesDrawerState({ isOpen: true, rangeId: 'expert', pillarId: pillar.id, pillarName: pillar.name, rangeName: 'Expert Range' }); 
+                                      }}
+                                      className={`px-3 py-1.5 text-xs font-medium border rounded-lg transition-all duration-150 flex items-center gap-1.5 shrink-0 ${
+                                        notesCount > 0
+                                          ? 'bg-[#071b45]/10 border-[#071b45]/30 text-[#071b45] hover:bg-[#071b45]/20 hover:border-[#071b45]/50 cursor-pointer'
+                                          : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50 cursor-pointer'
+                                      }`}
+                                    >
+                                      <MessageSquare size={14} className={notesCount > 0 ? "fill-current" : ""} />
+                                      Notes {notesCount > 0 && <span className="bg-[#071b45] text-white font-semibold text-[11px] px-2 py-0.5 rounded-full shadow-sm">{notesCount}</span>}
+                                    </button>
+                                  </div>
+                                );
+                            })()}
+                          >
+                            {renderProductGrid(experts)}
+                          </CollapsibleRange>
                         )}
                       </div>
                     </div>
@@ -396,6 +512,18 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
           )}
 
         </div>
+      )}
+
+      {notesDrawerState && selectedMarket && (
+        <NotesDrawer
+          isOpen={notesDrawerState.isOpen}
+          onClose={() => setNotesDrawerState(null)}
+          storageKey={`notes_${selectedMarket.id}_${notesDrawerState.pillarId}_${notesDrawerState.rangeId}`}
+          pillarName={notesDrawerState.pillarName}
+          rangeName={notesDrawerState.rangeName}
+          countryName={selectedMarket.country}
+          onNotesChange={() => setNotesUpdateCounter(c => c + 1)}
+        />
       )}
     </div>
   );
