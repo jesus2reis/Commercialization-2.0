@@ -277,22 +277,22 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                   const rawValue = selectedMarket.values[product.id] || '';
                   const state = getProductState(rawValue);
                   
-                  let cardStyle = 'bg-slate-50 border-slate-200 opacity-60';
-                  let nameStyle = 'text-slate-500';
-                  let labelStyle = 'text-slate-500';
+                  let cardStyle = 'bg-neutral-50/70 border-neutral-200/60 opacity-60';
+                  let nameStyle = 'text-neutral-400';
+                  let labelStyle = 'text-neutral-400';
                   let statusBadge: { text: string, style: string } | null = null;
 
                   if (state === 'active') {
                     cardStyle = 'bg-emerald-50/50 border-emerald-200 shadow-sm';
                     nameStyle = 'text-emerald-900';
+                    labelStyle = 'text-emerald-700/70';
                   } else if (state === 'alternative') {
                     cardStyle = 'bg-[#FEFCE8] border-[#FDE047] shadow-sm';
                     nameStyle = 'text-amber-900';
+                    labelStyle = 'text-amber-700/70';
                     statusBadge = { text: rawValue, style: 'bg-[#FEF08A] text-[#854D0E]' };
                   } else if (state === 'not_available') {
-                    cardStyle = 'bg-neutral-50/80 border-neutral-200 opacity-80';
-                    nameStyle = 'text-neutral-400';
-                    labelStyle = 'text-neutral-400';
+                    // Uses the same neutral base style as 'inactive'
                     statusBadge = { text: 'Currently not available', style: 'bg-neutral-200/70 text-neutral-600 border border-neutral-300/40 tracking-wide' };
                   }
 
