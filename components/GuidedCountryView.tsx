@@ -279,6 +279,7 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                   
                   let cardStyle = 'bg-slate-50 border-slate-200 opacity-60';
                   let nameStyle = 'text-slate-500';
+                  let labelStyle = 'text-slate-500';
                   let statusBadge: { text: string, style: string } | null = null;
 
                   if (state === 'active') {
@@ -289,9 +290,10 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                     nameStyle = 'text-amber-900';
                     statusBadge = { text: rawValue, style: 'bg-[#FEF08A] text-[#854D0E]' };
                   } else if (state === 'not_available') {
-                    cardStyle = 'bg-slate-50 border-slate-200';
-                    nameStyle = 'text-slate-500';
-                    statusBadge = { text: 'Currently not available', style: 'bg-amber-100 text-amber-800' };
+                    cardStyle = 'bg-neutral-50/80 border-neutral-200 opacity-80';
+                    nameStyle = 'text-neutral-400';
+                    labelStyle = 'text-neutral-400';
+                    statusBadge = { text: 'Currently not available', style: 'bg-neutral-200/70 text-neutral-600 border border-neutral-300/40 tracking-wide' };
                   }
 
                   return (
@@ -302,7 +304,7 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                       <div>
                         {product.label && (
                           <div className="w-full mb-0.5">
-                            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider leading-none block w-full">
+                            <span className={`text-[8px] font-bold uppercase tracking-wider leading-none block w-full ${labelStyle}`}>
                               {product.label}
                             </span>
                           </div>
