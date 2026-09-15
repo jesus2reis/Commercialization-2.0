@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { MarketPortfolioData, PillarId, ParsedProduct } from '../types';
 import { PILLARS } from '../services/dataService';
-import { ArrowLeft, AlertCircle, CheckCircle2, Info, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react';
+import { ArrowLeft, AlertCircle, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { CountrySelector } from './CountrySelector';
 import { NotesDrawer } from './NotesDrawer';
+import { RangeActionFooter } from './RangeActionFooter';
+import { computeRangeAssessments } from '../services/assessmentEngine';
 
 interface GuidedCountryViewProps {
   markets: MarketPortfolioData[];
@@ -44,6 +46,7 @@ const CollapsibleRange = ({
   completenessLabel, 
   completenessStyle, 
   hasActionNeeded,
+  actionCount = 0,
   actionNeededNode, 
   children 
 }: { 
@@ -51,6 +54,7 @@ const CollapsibleRange = ({
   completenessLabel?: string;
   completenessStyle?: string;
   hasActionNeeded?: boolean;
+  actionCount?: number;
   actionNeededNode: React.ReactNode;
   children: React.ReactNode;
 }) => {
@@ -75,11 +79,11 @@ const CollapsibleRange = ({
             {!isOpen && hasActionNeeded && (
               <div 
                 className="relative group/tooltip flex items-center"
-                onClick={(e) => e.stopPropagation()} // Prevent toggling when hovering/clicking tooltip icon if needed, though it's a button so bubble is okay. Stopping just in case.
+                onClick={(e) => e.stopPropagation()}
               >
                 <AlertCircle size={16} className="text-amber-500 cursor-help" />
                 <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max bg-[#1E293B] text-white text-[11px] font-medium px-2.5 py-1.5 rounded-md shadow-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity z-50 pointer-events-none text-center">
-                  Action Needed
+                  {actionCount > 0 ? (actionCount === 1 ? '1 Assessment Needed' : `${actionCount} Assessments Needed`) : 'Action Needed'}
                   <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-[#1E293B]" />
                 </div>
               </div>
@@ -186,9 +190,12 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                   guidanceBg = "bg-emerald-100/50 text-emerald-800";
                 }
 
-                const actionNeededMessages = selectedMarket.actionNeeded[pillar.id] || [];
-                const validActionMessages = actionNeededMessages.filter(msg => msg && msg.toLowerCase() !== 'no' && msg.toLowerCase() !== 'none' && msg !== '-');
-                const hasAction = validActionMessages.length > 0;
+                const essentials = pillarProducts.filter(p => p.isEssential);
+                const experts = pillarProducts.filter(p => p.isExpert || !p.isEssential);
+                const essActions = computeRangeAssessments(essentials, selectedMarket.values);
+                const expActions = computeRangeAssessments(experts, selectedMarket.values);
+                const totalActionsCount = essActions.length + expActions.length;
+                const hasAction = totalActionsCount > 0;
 
                 return (
                   <button 
@@ -207,7 +214,7 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
                                 className="text-amber-500 cursor-help" 
                               />
                               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max bg-[#1E293B] text-white text-[11px] font-medium px-2.5 py-1.5 rounded-md shadow-md opacity-0 group-hover/tooltip:opacity-100 transition-opacity z-50 pointer-events-none text-center">
-                                Action Needed
+                                {totalActionsCount === 1 ? '1 Assessment Needed' : `${totalActionsCount} Assessments Needed`}
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 border-4 border-transparent border-b-[#1E293B]" />
                               </div>
                             </div>
@@ -374,137 +381,81 @@ export const GuidedCountryView: React.FC<GuidedCountryViewProps> = ({
 
                     <div className="p-8 space-y-8">
                       <div className="flex flex-col gap-8">
-                        {essentials.length > 0 && (
-                          <CollapsibleRange
-                            title="Essential Range"
-                            completenessLabel={selectedMarket.rangeCompleteness?.[pillar.id]?.essential}
-                            completenessStyle={
-                              selectedMarket.rangeCompleteness?.[pillar.id]?.essential === 'Complete' ? 'bg-emerald-100/50 text-emerald-800' :
-                              selectedMarket.rangeCompleteness?.[pillar.id]?.essential === 'Partial' ? 'bg-amber-100/60 text-[#B45309]' :
-                              'bg-slate-100 text-slate-600'
-                            }
-                            hasActionNeeded={
-                              !!(selectedMarket.rangeActionNeeded?.[pillar.id]?.essential && 
-                              selectedMarket.rangeActionNeeded?.[pillar.id]?.essential?.toLowerCase() !== 'no' && 
-                              selectedMarket.rangeActionNeeded?.[pillar.id]?.essential?.toLowerCase() !== 'none' && 
-                              selectedMarket.rangeActionNeeded?.[pillar.id]?.essential !== '-')
-                            }
-                            actionNeededNode={(() => {
-                                const action = selectedMarket.rangeActionNeeded?.[pillar.id]?.essential;
-                                const hasAction = action && action.toLowerCase() !== 'no' && action.toLowerCase() !== 'none' && action !== '-';
-                                
-                                const storageKey = `notes_${selectedMarket.id}_${pillar.id}_essential`;
-                                const savedNotes = JSON.parse(localStorage.getItem(storageKey) || '[]');
-                                const notesCount = savedNotes.length;
+                        {essentials.length > 0 && (() => {
+                          const essActions = computeRangeAssessments(essentials, selectedMarket.values);
+                          const storageKey = `notes_${selectedMarket.id}_${pillar.id}_essential`;
+                          const savedNotes = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                          const notesCount = savedNotes.length;
 
-                                const ActionContent = hasAction ? (
-                                  <div className="flex items-start gap-3">
-                                    <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
-                                    <div>
-                                      <h5 className="text-sm font-bold text-slate-900 mb-0.5">Action Needed</h5>
-                                      <p className="text-xs text-slate-600">{action.toLowerCase() === 'yes' ? 'Action Needed' : action}</p>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-start gap-3">
-                                    <CheckCircle2 className="text-slate-400 shrink-0 mt-0.5" size={18} />
-                                    <div>
-                                      <h5 className="text-sm font-bold text-slate-600 mb-0.5">No Action Needed</h5>
-                                      <p className="text-xs text-slate-500">Requirements are fulfilled for this range.</p>
-                                    </div>
-                                  </div>
-                                );
-                                
-                                return (
-                                  <div className={`border rounded-xl p-4 flex flex-row items-center justify-between gap-4 ${hasAction ? 'bg-white border-amber-200 shadow-sm' : 'bg-white/50 border-slate-200'}`}>
-                                    {ActionContent}
-                                    <button 
-                                      onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        setNotesDrawerState({ isOpen: true, rangeId: 'essential', pillarId: pillar.id, pillarName: pillar.name, rangeName: 'Essential Range' }); 
-                                      }}
-                                      className={`px-3 py-1.5 text-xs font-medium border rounded-lg transition-all duration-150 flex items-center gap-1.5 shrink-0 ${
-                                        notesCount > 0
-                                          ? 'bg-[#071b45]/10 border-[#071b45]/30 text-[#071b45] hover:bg-[#071b45]/20 hover:border-[#071b45]/50 cursor-pointer'
-                                          : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50 cursor-pointer'
-                                      }`}
-                                    >
-                                      <MessageSquare size={14} className={notesCount > 0 ? "fill-current" : ""} />
-                                      Notes {notesCount > 0 && <span className="bg-[#071b45] text-white font-semibold text-[11px] px-2 py-0.5 rounded-full shadow-sm">{notesCount}</span>}
-                                    </button>
-                                  </div>
-                                );
-                            })()}
-                          >
-                            {renderProductGrid(essentials)}
-                          </CollapsibleRange>
-                        )}
+                          return (
+                            <CollapsibleRange
+                              title="Essential Range"
+                              completenessLabel={selectedMarket.rangeCompleteness?.[pillar.id]?.essential}
+                              completenessStyle={
+                                selectedMarket.rangeCompleteness?.[pillar.id]?.essential === 'Complete' ? 'bg-emerald-100/50 text-emerald-800' :
+                                selectedMarket.rangeCompleteness?.[pillar.id]?.essential === 'Partial' ? 'bg-amber-100/60 text-[#B45309]' :
+                                'bg-slate-100 text-slate-600'
+                              }
+                              hasActionNeeded={essActions.length > 0}
+                              actionCount={essActions.length}
+                              actionNeededNode={
+                                <RangeActionFooter
+                                  actionList={essActions}
+                                  notesCount={notesCount}
+                                  onOpenNotes={() => {
+                                    setNotesDrawerState({
+                                      isOpen: true,
+                                      rangeId: 'essential',
+                                      pillarId: pillar.id,
+                                      pillarName: pillar.name,
+                                      rangeName: 'Essential Range',
+                                    });
+                                  }}
+                                />
+                              }
+                            >
+                              {renderProductGrid(essentials)}
+                            </CollapsibleRange>
+                          );
+                        })()}
 
-                        {experts.length > 0 && (
-                          <CollapsibleRange
-                            title="Expert Range"
-                            completenessLabel={selectedMarket.rangeCompleteness?.[pillar.id]?.expert}
-                            completenessStyle={
-                              selectedMarket.rangeCompleteness?.[pillar.id]?.expert === 'Complete' ? 'bg-emerald-100/50 text-emerald-800' :
-                              selectedMarket.rangeCompleteness?.[pillar.id]?.expert === 'Partial' ? 'bg-amber-100/60 text-[#B45309]' :
-                              'bg-slate-100 text-slate-600'
-                            }
-                            hasActionNeeded={
-                              !!(selectedMarket.rangeActionNeeded?.[pillar.id]?.expert && 
-                              selectedMarket.rangeActionNeeded?.[pillar.id]?.expert?.toLowerCase() !== 'no' && 
-                              selectedMarket.rangeActionNeeded?.[pillar.id]?.expert?.toLowerCase() !== 'none' && 
-                              selectedMarket.rangeActionNeeded?.[pillar.id]?.expert !== '-')
-                            }
-                            actionNeededNode={(() => {
-                                const action = selectedMarket.rangeActionNeeded?.[pillar.id]?.expert;
-                                const hasAction = action && action.toLowerCase() !== 'no' && action.toLowerCase() !== 'none' && action !== '-';
-                                
-                                const storageKey = `notes_${selectedMarket.id}_${pillar.id}_expert`;
-                                const savedNotes = JSON.parse(localStorage.getItem(storageKey) || '[]');
-                                const notesCount = savedNotes.length;
+                        {experts.length > 0 && (() => {
+                          const expActions = computeRangeAssessments(experts, selectedMarket.values);
+                          const storageKey = `notes_${selectedMarket.id}_${pillar.id}_expert`;
+                          const savedNotes = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                          const notesCount = savedNotes.length;
 
-                                const ActionContent = hasAction ? (
-                                  <div className="flex items-start gap-3">
-                                    <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={18} />
-                                    <div>
-                                      <h5 className="text-sm font-bold text-slate-900 mb-0.5">Action Needed</h5>
-                                      <p className="text-xs text-slate-600">{action.toLowerCase() === 'yes' ? 'Action Needed' : action}</p>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-start gap-3">
-                                    <CheckCircle2 className="text-slate-400 shrink-0 mt-0.5" size={18} />
-                                    <div>
-                                      <h5 className="text-sm font-bold text-slate-600 mb-0.5">No Action Needed</h5>
-                                      <p className="text-xs text-slate-500">Requirements are fulfilled for this range.</p>
-                                    </div>
-                                  </div>
-                                );
-                                
-                                return (
-                                  <div className={`border rounded-xl p-4 flex flex-row items-center justify-between gap-4 ${hasAction ? 'bg-white border-amber-200 shadow-sm' : 'bg-white/50 border-slate-200'}`}>
-                                    {ActionContent}
-                                    <button 
-                                      onClick={(e) => { 
-                                        e.stopPropagation(); 
-                                        setNotesDrawerState({ isOpen: true, rangeId: 'expert', pillarId: pillar.id, pillarName: pillar.name, rangeName: 'Expert Range' }); 
-                                      }}
-                                      className={`px-3 py-1.5 text-xs font-medium border rounded-lg transition-all duration-150 flex items-center gap-1.5 shrink-0 ${
-                                        notesCount > 0
-                                          ? 'bg-[#071b45]/10 border-[#071b45]/30 text-[#071b45] hover:bg-[#071b45]/20 hover:border-[#071b45]/50 cursor-pointer'
-                                          : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50 cursor-pointer'
-                                      }`}
-                                    >
-                                      <MessageSquare size={14} className={notesCount > 0 ? "fill-current" : ""} />
-                                      Notes {notesCount > 0 && <span className="bg-[#071b45] text-white font-semibold text-[11px] px-2 py-0.5 rounded-full shadow-sm">{notesCount}</span>}
-                                    </button>
-                                  </div>
-                                );
-                            })()}
-                          >
-                            {renderProductGrid(experts)}
-                          </CollapsibleRange>
-                        )}
+                          return (
+                            <CollapsibleRange
+                              title="Expert Range"
+                              completenessLabel={selectedMarket.rangeCompleteness?.[pillar.id]?.expert}
+                              completenessStyle={
+                                selectedMarket.rangeCompleteness?.[pillar.id]?.expert === 'Complete' ? 'bg-emerald-100/50 text-emerald-800' :
+                                selectedMarket.rangeCompleteness?.[pillar.id]?.expert === 'Partial' ? 'bg-amber-100/60 text-[#B45309]' :
+                                'bg-slate-100 text-slate-600'
+                              }
+                              hasActionNeeded={expActions.length > 0}
+                              actionCount={expActions.length}
+                              actionNeededNode={
+                                <RangeActionFooter
+                                  actionList={expActions}
+                                  notesCount={notesCount}
+                                  onOpenNotes={() => {
+                                    setNotesDrawerState({
+                                      isOpen: true,
+                                      rangeId: 'expert',
+                                      pillarId: pillar.id,
+                                      pillarName: pillar.name,
+                                      rangeName: 'Expert Range',
+                                    });
+                                  }}
+                                />
+                              }
+                            >
+                              {renderProductGrid(experts)}
+                            </CollapsibleRange>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>

@@ -21,6 +21,13 @@ export interface PillarDefinition {
   iconName: string;
 }
 
+export type AssessmentRequirement = 'must-have' | 'nice-to-have' | null;
+
+export interface AssessmentItem {
+  text: string;
+  requirement: AssessmentRequirement;
+}
+
 export interface ParsedProduct {
   id: string; 
   pillarId: PillarId;
